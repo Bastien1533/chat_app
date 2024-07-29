@@ -1,135 +1,115 @@
-import React from "react";
+import { useState, useEffect } from 'react';
 
-let selected_iframe = null
-let selected_tab = null
+let selectedIframe = null;
+let selectedTab = null;
 
-function ChangeTabSelection(tab, iframe) {
-    if (tab !== selected_tab) {
-        tab.selected = !tab.selected
-        if (selected_iframe != null) {
-            console.log(selected_tab)
-            selected_iframe.hidden = true
-            selected_tab.unselect()
+function changeTabSelection(tab, iframe) {
+    if (tab !== selectedTab) {
+        tab.selected = !tab.selected;
+        if (selectedIframe !== null) {
+            selectedIframe.hidden = true;
+            selectedTab.unselect();
         }
-        selected_iframe = iframe
-        selected_tab = tab
+        selectedIframe = iframe;
+        selectedTab = tab;
     }
 }
 
 function MenuIcon() {
     return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-             className="bi bi-three-dots"
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash"
              viewBox="0 0 16 16">
             <path
-                d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/>
+                d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+            <path
+                d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
         </svg>
-    )
+    );
 }
 
-function ChatIframe({idx}) {
-    return (<iframe id={`iframe-${idx}`} hidden={true}
-                    src="https://microsoft.github.io/BotFramework-WebChat/02.branding-styling-and-customization/a.branding-web-chat/"
-                    height="100%" width="100%"/>)
+function ChatIframe({id}) {
+    return (
+        <iframe
+            id={`iframe-${id}`}
+            hidden={true}
+            src="https://microsoft.github.io/BotFramework-WebChat/02.branding-styling-and-customization/a.branding-web-chat/"
+            height="100%"
+            width="100%"
+        />
+    );
 }
 
-class Tab extends React.Component {
-    constructor(props) {
-        super(props);
-        this.parent_container = props.parent_container
-        this.text = props.text
-        this.idx = props.idx
-        this.selected = props.selected
-        this.handleClick = this.handleClick.bind(this);
-        this.unselect = this.unselect.bind(this);
-    }
+function Tab({tab, deleteTab}) {
+    const [selected, setSelected] = useState(false);
 
-    handleClick() {
-        let iframe = document.getElementById(`iframe-${this.idx.toString()}`)
-        ChangeTabSelection(this, iframe)
-        this.forceUpdate()
-    }
+    const handleClick = () => {
+        let iframe = document.getElementById(`iframe-${tab.id}`);
+        changeTabSelection({ selected, unselect }, iframe);
+        setSelected(!selected);
+    };
 
-    unselect() {
-        this.selected = false
-        this.forceUpdate()
-    }
+    const unselect = () => {
+        setSelected(false);
+    };
 
-
-    render() {
-        let three_dots;
-        if (this.selected) {
-            three_dots = MenuIcon()
-            document.getElementById(`iframe-${this.idx.toString()}`).hidden = false
-        } else {
-            three_dots = <></>
+    useEffect(() => {
+        if (selected) {
+            document.getElementById(`iframe-${tab.id}`).hidden = false;
         }
+    }, [selected, tab.id]);
 
-        return (
-            <button onClick={this.handleClick}>
-                <div
-                    className="flex flex-row justify-between items-center overflow-hidden bg-white rounded-lg py-2 px-4 text-nowrap ">
-
-                    <span>{this.text}</span>
-                    <span>{three_dots}</span>
-                </div>
-            </button>
-
-        )
-    }
+    return (
+        <div>
+            <div className="flex flex-row justify-between items-center overflow-hidden bg-white rounded-lg py-2 px-4 text-nowrap ">
+                <button onClick={handleClick}>{tab.text}</button>
+                {selected && <button className={"hover:bg-gray-300 rounded-lg p-1"} onClick={() => deleteTab(tab.id)}>{MenuIcon()}</button>}
+            </div>
+        </div>
+    );
 }
 
-class TabContainer extends React.Component {
-    state = {
-        tabs_list: [],
-        iframe_list: [],
-        idx: 0
-    }
-    appendData = () => {
-        const newData = {text: `Tab  ${this.state.idx + 1}`, idx: this.state.idx}
-        const newDataFrame = {id: `${this.state.idx}`}
-        this.setState({idx : this.state.idx + 1})
-        this.setState(prevState => ({tabs_list: [...prevState.tabs_list, newData]}))
-        this.setState(prevState => ({iframe_list: [...prevState.iframe_list, newDataFrame]}))
-    }
+function TabContainer() {
+    const [tabsList, setTabsList] = useState([]);
+    const [idx, setIdx] = useState(0)
 
-    render() {
-        return (
-            <div className="grid grid-cols-3 h-full">
-                <div className="flex flex-col py-14 gap-5 items-center bg-[#004976] text-center px-4">
-                    <span className="text-white text-5xl font-bold">
-                        Welcome to the Chatbot! 
-                    </span>
-                    <span className="text-white text-4xl font-medium">
-                        Ask anything related to staff rules and regulations
-                    </span>
-                </div>
-                <div>
-                    {this.state.iframe_list.map(iframe => <ChatIframe key={iframe['id']} idx={iframe['id']}/>)}
-                </div>
-                <div className="flex flex-col gap-5 items-center bg-[#004976] text-center p-7 m">
-                    <div className="flex flex-col h-full w-full justify-start gap-10 bg-[#00905C] my-7 p-7 rounded-lg">
-                            <span
-                                className="flex gap-10 w-full justify-between text-center text-white text-2xl font-medium">
-                                Discussions
-                                <button onClick={this.appendData}>
-                                    +
-                                </button>
-                            </span>
+    const appendData = () => {
+        let id = (Math.random() + 1).toString(36).substring(7);
+        const newTab = { text: `Tab ${idx+1}`, id, idx };
+        setTabsList((prevTabs) => [...prevTabs, newTab]);
+        setIdx(idx + 1);
+    };
 
-                        <div id="" className="flex flex-col gap-10 h-full overflow-y-hidden justify-start">
-                            {this.state.tabs_list.map(tab => <Tab text={tab['text']}
-                                                                  key={tab['idx']}
-                                                                  parent_container={this}
-                                                                  idx={tab['idx']}/>)}
-                        </div>
+    const deleteTab = (id) => {
+        setTabsList((prevTabs) => prevTabs.filter((tab) => tab.id !== id));
+    };
+
+    return (
+        <div className="grid grid-cols-3 h-full">
+            <div className="flex flex-col py-14 gap-5 items-center bg-[#004976] text-center px-4">
+                <span className="text-white text-5xl font-bold">Welcome to the Chatbot!</span>
+                <span className="text-white text-4xl font-medium">Ask anything related to staff rules and regulations</span>
+            </div>
+            <div>
+                {tabsList.map((tab) => (
+                    <ChatIframe key={tab.id} id={tab.id} />
+                ))}
+            </div>
+            <div className="flex flex-col gap-5 items-center bg-[#004976] text-center p-7 m">
+                <div className="flex flex-col h-full w-full justify-start gap-10 bg-[#00905C] my-7 p-7 rounded-lg">
+          <span className="flex gap-10 w-full justify-between text-center text-white text-2xl font-medium">
+            Discussions
+            <button className={"text-[#004976] bg-white px-2 pb-1 rounded-lg"} onClick={appendData}>+</button>
+          </span>
+                    <div className="flex flex-col gap-10 h-full overflow-y-hidden justify-start">
+                        {tabsList.map((tab) => (
+                            <Tab key={tab.id} tab={tab} deleteTab={deleteTab} parentContainer={null} />
+                        ))}
                     </div>
                 </div>
             </div>
-        )
-    }
+        </div>
+    );
 }
-
 
 export default function App() {
     return (
@@ -138,8 +118,8 @@ export default function App() {
                 <span className="text-white text-2xl font-medium py-2">Chatbot App</span>
             </div>
             <div className="h-full">
-                <TabContainer/>
+                <TabContainer />
             </div>
         </div>
-    )
+    );
 }
