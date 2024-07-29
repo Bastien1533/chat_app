@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import {Helmet} from "react-helmet";
 
 let selectedIframe = null;
 let selectedTab = null;
@@ -113,13 +114,19 @@ function TabContainer() {
 
 export default function App() {
     return (
-        <div className="flex flex-col h-screen w-screen">
-            <div id="title" className="flex justify-center bg-black">
-                <span className="text-white text-2xl font-medium py-2">Chatbot App</span>
-            </div>
-            <div className="h-full">
-                <TabContainer />
+        <div className="application">
+            <Helmet>
+                <title>ChatBot App</title>
+            </Helmet>
+            <div className="flex flex-col h-screen w-screen">
+                <div id="title" className="flex justify-center bg-black">
+                    <span className="text-white text-2xl font-medium py-2">Chatbot App</span>
+                </div>
+                <div className="h-full">
+                    <TabContainer/>
+                </div>
             </div>
         </div>
+
     );
 }
