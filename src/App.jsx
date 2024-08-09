@@ -33,7 +33,7 @@ function ChatIframe({id}) {
         <iframe
             id={`iframe-${id}`}
             hidden={true}
-            src="https://bastien-chatbot-webapp.azurewebsites.net/"
+            src="https://bastien-chatbot-webchat.azurewebsites.net/"
             height="100%"
             width="100%"
         />
