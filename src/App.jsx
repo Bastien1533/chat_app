@@ -77,9 +77,9 @@ function TabContainer() {
     const [firstRun, setFirstRun] = useState(true)
 
 
-    const appendData = () => {
+    const appendData = (first) => {
         let id = (Math.random() + 1).toString(36).substring(7);
-        const newTab = { text: `Tab ${idx+1}`, id, idx };
+        const newTab = { text: `Tab ${idx+1}`, id, idx, first};
         setTabsList((prevTabs) => [...prevTabs, newTab]);
         setIdx(idx + 1);
         return [newTab, id]
@@ -102,7 +102,7 @@ function TabContainer() {
     };
     
     if (firstRun) {
-        let res = appendData()
+        let res = appendData(true)
         setFirstRun(false)
     }
 
