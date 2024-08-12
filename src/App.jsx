@@ -1,20 +1,6 @@
 import { useState, useEffect } from 'react';
 import {Helmet} from "react-helmet";
 
-let selectedIframe = null;
-let selectedTab = null;
-
-function changeTabSelection(tab, iframe) {
-    if (tab !== selectedTab) {
-        tab.selected = !tab.selected;
-        if (selectedIframe !== null) {
-            selectedIframe.hidden = true;
-            selectedTab.unselect();
-        }
-        selectedIframe = iframe;
-        selectedTab = tab;
-    }
-}
 
 function MenuIcon() {
     return (
@@ -29,29 +15,42 @@ function MenuIcon() {
 }
 
 function ChatIframe({id}) {
+    const loadingMessage = "The Chat is currently loading..."
+
+    const svgItem = <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100% 100%">
+        <text fill="%23000000" x="50%" y="50%" fontFamily="'Lucida Grande', sans-serif" fontSize="24"
+              textAnchor="middle">${loadingMessage}</text>
+    </svg>
+
     return (
+
         <iframe
+            style={{background: `url('data:image/svg+xml;charset=utf-8,${svgItem}`}}
             id={`iframe-${id}`}
             hidden={true}
-            src="https://bastien-chatbot-webapp.azurewebsites.net/"
+            src="https://bastien-chatbot-webchat.azurewebsites.net/"
             height="100%"
             width="100%"
-        />
+        >
+        </iframe>
     );
 }
 
-function Tab({tab, deleteTab}) {
-    const [selected, setSelected] = useState(false);
+function Tab({tab, deleteTab, toggleTabSelection, selectedTab}) {
+    const [selected, setSelected] = useState(selectedTab === this);
+    const [hovered, setHovered] = useState(false)
 
     const handleClick = () => {
         let iframe = document.getElementById(`iframe-${tab.id}`);
-        changeTabSelection({ selected, unselect }, iframe);
+        //changeTabSelection({ selected, unselect }, iframe);
+        toggleTabSelection(tab, iframe, unselect)
         setSelected(!selected);
     };
 
     const unselect = () => {
         setSelected(false);
     };
+    
 
     useEffect(() => {
         if (selected) {
@@ -62,7 +61,9 @@ function Tab({tab, deleteTab}) {
     return (
         <div>
             <div className="flex flex-row justify-between items-center overflow-hidden bg-white rounded-lg py-2 px-4 text-nowrap ">
-                <button onClick={handleClick}>{tab.text}</button>
+                <button className={`w-11/12 text-start`} onMouseOut={() => setHovered(false)} onMouseOver={() => setHovered(true)} onClick={handleClick}>
+                    <span className={`px-2 rounded-lg text-center ${hovered && "bg-gray-300"}`}>{tab.text}</span>
+                </button>
                 {selected && <button className={"hover:bg-gray-300 rounded-lg p-1"} onClick={() => deleteTab(tab.id)}>{MenuIcon()}</button>}
             </div>
         </div>
@@ -72,17 +73,38 @@ function Tab({tab, deleteTab}) {
 function TabContainer() {
     const [tabsList, setTabsList] = useState([]);
     const [idx, setIdx] = useState(0)
+    const [selectedTab, setSelectedTab] = useState({tab: null, iframe : null, unselect : null})
+    const [firstRun, setFirstRun] = useState(true)
+
 
     const appendData = () => {
         let id = (Math.random() + 1).toString(36).substring(7);
         const newTab = { text: `Tab ${idx+1}`, id, idx };
         setTabsList((prevTabs) => [...prevTabs, newTab]);
         setIdx(idx + 1);
+        return [newTab, id]
     };
+    
+    const toggleTabSelection = (tab, iframe, unselect) => {
+        if (selectedTab.tab === tab){
+            setSelectedTab({tab:null, iframe: null})
+            return
+        }
+        if (selectedTab.iframe != null){
+            selectedTab.iframe.hidden = true
+            selectedTab.unselect()
+        }
+        setSelectedTab({tab: tab, iframe: iframe, unselect: unselect})
+    }
 
     const deleteTab = (id) => {
         setTabsList((prevTabs) => prevTabs.filter((tab) => tab.id !== id));
     };
+    
+    if (firstRun) {
+        let res = appendData()
+        setFirstRun(false)
+    }
 
     return (
         <div className="grid grid-cols-3 h-full">
@@ -103,7 +125,7 @@ function TabContainer() {
           </span>
                     <div className="flex flex-col gap-10 h-full overflow-y-hidden justify-start">
                         {tabsList.map((tab) => (
-                            <Tab key={tab.id} tab={tab} deleteTab={deleteTab} parentContainer={null} />
+                            <Tab key={tab.id} tab={tab} deleteTab={deleteTab} toggleTabSelection={toggleTabSelection} selectedTab={selectedTab} parentContainer={null} />
                         ))}
                     </div>
                 </div>
@@ -113,6 +135,8 @@ function TabContainer() {
 }
 
 export default function App() {
+    
+    
     return (
         <div className="application">
             <Helmet>
@@ -123,7 +147,7 @@ export default function App() {
                     <span className="text-white text-2xl font-medium py-2">Chatbot App</span>
                 </div>
                 <div className="h-full">
-                    <TabContainer/>
+                    <TabContainer />
                 </div>
             </div>
         </div>
